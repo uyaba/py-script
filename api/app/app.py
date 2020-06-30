@@ -1,22 +1,34 @@
 # -*- coding: utf-8 -*-
 # ！usr/bin/python
 # ==========================
-from flask import Flask
+from flask import Flask, Response
 from flask_restful import reqparse, abort, Api, Resource
+import json
 
 app = Flask(__name__)
 api = Api(app)
 
-ITEMS = {
-    'todo1': {'task': 'build an API'},
-    'todo2': {'task': '?????'},
-    'todo3': {'task': 'profit!'},
-}
-
-
-def abort_if_todo_doesnt_exist(todo_id):
-    if todo_id not in ITEMS:
-        abort(404, message="Todo {} doesn't exist".format(todo_id))
+ITEMS = '''
+    {
+        "MemberList": [{
+                "Id":1,
+                "UserName": "sb1",
+                "Age":10
+            },
+            {
+                "Id":2,
+                "UserName": "sb2",
+                "Age":10
+            },
+            {
+                "Id":3,
+                "UserName": "sb3",
+                "Age":10
+            }]
+    }
+    '''
+my_friends = json.loads(ITEMS)
+memberList = my_friends.get('MemberList')
 
 parser = reqparse.RequestParser()
 parser.add_argument('task')
@@ -25,12 +37,10 @@ parser.add_argument('task')
 # Todo
 # shows a single todo item and lets you delete a todo item
 class Todo(Resource):
-    def get(self, todo_id):
-        abort_if_todo_doesnt_exist(todo_id)
-        return ITEMS[todo_id]
+    def get(self,user_id):
+        return memberList[user_id]
 
     def delete(self, todo_id):
-        abort_if_todo_doesnt_exist(todo_id)
         del ITEMS[todo_id]
         return '', 204
 
@@ -45,14 +55,7 @@ class Todo(Resource):
 # shows a list of all todos, and lets you POST to add new tasks
 class TodoList(Resource):
     def get(self):
-        return ITEMS
-
-    def post(self):
-        args = parser.parse_args()
-        todo_id = int(max(ITEMS.keys()).lstrip('todo')) + 1
-        todo_id = 'todo%i' % todo_id
-        ITEMS[todo_id] = {'task': args['task']}
-        return ITEMS[todo_id], 201
+        return Response(json.dumps(memberList), mimetype='application/json')
 
 ##
 ## Actually setup the Api resource routing here
